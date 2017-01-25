@@ -7,20 +7,42 @@
 //
 
 import UIKit
+import AVFoundation
 
-class ViewController: UIViewController,UICollectionViewDelegate,UICollectionViewDataSource,UICollectionViewDelegateFlowLayout {
+class ViewController: UIViewController, UICollectionViewDelegate,UICollectionViewDataSource,UICollectionViewDelegateFlowLayout,UISearchBarDelegate{
 
     @IBOutlet weak var collection:UICollectionView!
     
+    @IBOutlet weak var searchBar: UISearchBar!
+    
     var pokemon = [Pokemon]()
+    var filteredPokemon = [Pokemon]()
+    var musicPlayer: AVAudioPlayer!
+    var inSearchMode = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
         collection.delegate = self
         collection.dataSource = self
+        searchBar.delegate = self
+        
+        searchBar.returnKeyType = UIReturnKeyType.done
 //        let charmander = Pokemon(name: "Charmander", pokedexId: 4)
 //        print(charmander.name)
         persePokemonCSV()
+        initAudio()
+    }
+    
+    func initAudio(){
+        let path = Bundle.main.path(forResource: "music", ofType: "mp3")
+        do{
+            musicPlayer = try AVAudioPlayer(contentsOf: URL(string: path!)!)
+            musicPlayer.prepareToPlay()
+            musicPlayer.numberOfLoops = -1 //infinito
+            musicPlayer.play()
+        }catch let err as NSError{
+            print(err.debugDescription)
+        }
     }
     
     func persePokemonCSV() {
@@ -45,9 +67,18 @@ class ViewController: UIViewController,UICollectionViewDelegate,UICollectionView
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         //onde criamos as cells
         if let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "PokeCell", for: indexPath) as? PokeCell{
-            let poke = pokemon[indexPath.row]
-            
+            let poke:Pokemon!
+            if inSearchMode{
+                poke = filteredPokemon[indexPath.row]
+            }else{
+                poke = pokemon[indexPath.row]
+                
+                
+            }
             cell.configureCell(poke) //chama o metodo no pokecell para setar o lbl e img
+
+            
+          
             return cell
         }else{
             return UICollectionViewCell()
@@ -59,7 +90,12 @@ class ViewController: UIViewController,UICollectionViewDelegate,UICollectionView
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return pokemon.count // retorna quantos objetos na collection
+        if inSearchMode{
+            return filteredPokemon.count
+        }else{
+            return pokemon.count // retorna quantos objetos na collection
+            
+        }
     }
     
     func numberOfSections(in collectionView: UICollectionView) -> Int {
@@ -71,6 +107,35 @@ class ViewController: UIViewController,UICollectionViewDelegate,UICollectionView
         
     }
     
+    @IBAction func musicButtonPressed(_ sender: UIButton) {
+        if musicPlayer.isPlaying{
+             musicPlayer.pause()
+            sender.alpha = 0.2
+            
+        }else{
+            musicPlayer.play()
+            sender.alpha = 1.0
+        }
+   
+    }
     
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        view.endEditing(true)
+    }
+    
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        if searchBar.text == nil  || searchBar.text == ""{
+            inSearchMode = false
+            collection.reloadData()
+            view.endEditing(true)
+        }else{
+            inSearchMode =  true
+            let lower = searchBar.text!.lowercased()
+            filteredPokemon = pokemon.filter({
+                $0.name.range(of: lower) != nil
+            })
+            collection.reloadData()
+        }
+    }
 }
 
