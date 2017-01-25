@@ -28,8 +28,13 @@ class PokemonDetailVC: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-       nameLbl.text = pokemon.name
+       nameLbl.text = pokemon.name.capitalized
+       
+        let img = UIImage(named: "\(pokemon.pokedexId)")
         
+        mainImage.image = img
+        currentEvoImg.image = img
+        pokedexLbl.text = "\(pokemon.pokedexId)"
         pokemon.downloadPokemonDetail {
             //só ira ser chamado depois que o network call estiver completo
             print("passou pelo downloadPokemonDetail")
@@ -43,8 +48,19 @@ class PokemonDetailVC: UIViewController {
         typeLbl.text = pokemon.type
         weightLbl.text = pokemon.weight
         heightLbl.text = pokemon.height
-        nameLbl.text = pokemon.name
-        pokedexLbl.text = "\(pokemon.pokedexId)"
+        descriptionLbl.text = pokemon.description
+        
+        if pokemon.nextEvolutionId == ""{
+            evoLbl.text = "Ja esta na ultima evoluçao"
+            nextEvoImg.isHidden = true
+        }else{
+            nextEvoImg.isHidden = false
+            nextEvoImg.image = UIImage(named: pokemon.nextEvolutionId)
+            
+            let str = "Proxima Evoluçao: \(pokemon.nextEvolutionName) -LVL \(pokemon.nextEvolutionLevel)"
+            evoLbl.text = str
+        }
+        
         
     }
 
